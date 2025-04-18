@@ -5,7 +5,7 @@ import random
 # python libs
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
+from PIL import Image, ImageDraw
 from shapely import Point, LineString
 from shapely.geometry import Polygon
 from scipy.spatial import Delaunay
@@ -515,6 +515,8 @@ def main():
     approximated_image_dsu = find_connected_components_dsu_color(approximated_image, connected_components_color_tolerance)
     approximated_image_components = dict()
     rows, columns, _ = approximated_image.shape
+    output_image = Image.new('RGB', (columns, rows), (255, 255, 255))
+    draw = ImageDraw.Draw(output_image)
     for r in range(rows):
         for c in range(columns):
             component_parent = approximated_image_dsu.find(pixel_index(r, c, columns))
@@ -522,6 +524,7 @@ def main():
                 approximated_image_components[component_parent].append((r, c))
             else:
                 approximated_image_components[component_parent] = [(r, c)]
+
     for component in approximated_image_components:
         if not is_like_circle(approximated_image_components[component]):
             continue
@@ -537,8 +540,11 @@ def main():
             continue
         optimized_polyline = optimize_polyline(initial_non_self_intersecting_polyline, approximated_image_components[component])
         final_bezier_curve = fit_bezier_curve(optimized_polyline, approximated_image_components[component])
-        print(final_bezier_curve)
-        plot_polygon(final_bezier_curve)
+        draw.line(final_bezier_curve + [final_bezier_curve[0]], fill=(0, 0, 0), width=2)
+
+    output_image.save('res.png')
+    output_image.show()
+
 
 if __name__ == "__main__":
     main()
