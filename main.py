@@ -519,10 +519,10 @@ def main():
     # connected_components_color_tolerance = ask_user_for_int_data("Color tolerance for different elements of connected components in dsu: ")
     # initial_polyline_num_points = ask_user_for_int_data("Initial polyline points amount: ")
     # attempts_to_generate_initial_polyline = ask_user_for_int_data("Attempt to generate initial polyline: ")
-    max_colors_amount = 2
-    monte_carlo_color_optimization_iterations_amount = 300
+    max_colors_amount = 3
+    monte_carlo_color_optimization_iterations_amount = 200
     connected_components_color_tolerance = 10
-    initial_polyline_num_points = 200
+    initial_polyline_num_points = 25
     attempts_to_generate_initial_polyline = 100000
     best_colors = monte_carlo_color_optimization(pixel_array, max_colors_amount, monte_carlo_color_optimization_iterations_amount)
     print(best_colors)
@@ -557,6 +557,8 @@ def main():
         optimized_polyline = optimize_polyline(initial_non_self_intersecting_polyline, approximated_image_components[component])
         final_bezier_curve = fit_bezier_curve(optimized_polyline, approximated_image_components[component])
         component_color = tuple(approximated_image[approximated_image_components[component][0][0]][approximated_image_components[component][0][1]])
+        final_bezier_curve = [(x, y) for y, x in final_bezier_curve]
+        # draw.line(final_bezier_curve, fill=component_color, width=2)
         draw.line(final_bezier_curve + [final_bezier_curve[0]], fill=component_color, width=2)
 
     output_image.save("res.png")
