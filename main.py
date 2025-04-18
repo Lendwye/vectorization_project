@@ -130,7 +130,7 @@ def segment_picture(picture):
 
 
 def color_dist(first, second):
-    return sum(abs(f - s) for f, s in zip(first, second))
+    return sum(abs(int(f)-int(s)) for f,s in zip(first,second))
 
 
 def calculate_covering_radius(image, approximating_colors, distance_function=color_dist):
@@ -150,7 +150,7 @@ def monte_carlo_color_optimization(image, max_colors, iterations=10000, distance
         num_colors = random.randint(1, max_colors)
         random_colors = []
         for _ in range(num_colors):
-            random_colors.append((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+            random_colors.append((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 255))
             random_colors_np = np.array(random_colors)
             radius = calculate_covering_radius(image, random_colors_np, distance_function)
             if radius < min_radius:
@@ -164,7 +164,15 @@ def approximate_image(image, approximating_colors, distance_function=color_dist)
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             pixel = image[i, j]
-            closest_color = min(approximating_colors, key=lambda color: distance_function(pixel, color))
+            #closest_color = min(approximating_colors, key=lambda color: distance_function(pixel, color))
+            closest_color = approximating_colors[0]
+            min_clr_dist = 255 * 4
+            for color in approximating_colors:
+                cur_dist = distance_function(pixel, color)
+                if cur_dist < min_clr_dist:
+                    min_clr_dist = cur_dist
+                    closest_color = color
+            print(closest_color)
             new_image[i, j] = closest_color
     return new_image.astype(np.uint8)
 
@@ -349,7 +357,6 @@ def generate_initial_non_self_intersecting_polyline(boundary_points, num_points)
     try:
         tri = Delaunay(selected_points)
     except Exception as e:
-        print(e)
         return None
     current_point = random.choice(selected_points)
     polyline = [current_point]
@@ -504,15 +511,23 @@ def plot_polygon(points):
 
 
 def main():
-    image = Image.open(input("Filename: "))
+    image = Image.open("test.png")
+    # image = Image.open(input("Filename: "))
     pixel_array = np.array(image)
-    max_colors_amount = ask_user_for_int_data("Max amount of colors: ")
-    monte_carlo_color_optimization_iterations_amount = ask_user_for_int_data("Amount of monte carlo optimization iterations: ")
-    connected_components_color_tolerance = ask_user_for_int_data("Color tolerance for different elements of connected components in dsu: ")
-    initial_polyline_num_points = ask_user_for_int_data("Initial polyline points amount: ")
-    attempts_to_generate_initial_polyline = ask_user_for_int_data("Attempt to generate initial polyline: ")
+    # max_colors_amount = ask_user_for_int_data("Max amount of colors: ")
+    # monte_carlo_color_optimization_iterations_amount = ask_user_for_int_data("Amount of monte carlo optimization iterations: ")
+    # connected_components_color_tolerance = ask_user_for_int_data("Color tolerance for different elements of connected components in dsu: ")
+    # initial_polyline_num_points = ask_user_for_int_data("Initial polyline points amount: ")
+    # attempts_to_generate_initial_polyline = ask_user_for_int_data("Attempt to generate initial polyline: ")
+    max_colors_amount = 2
+    monte_carlo_color_optimization_iterations_amount = 300
+    connected_components_color_tolerance = 10
+    initial_polyline_num_points = 200
+    attempts_to_generate_initial_polyline = 100000
     best_colors = monte_carlo_color_optimization(pixel_array, max_colors_amount, monte_carlo_color_optimization_iterations_amount)
+    print(best_colors)
     approximated_image = approximate_image(pixel_array, best_colors[0])
+    print(approximated_image)
     approximated_image_dsu = find_connected_components_dsu_color(approximated_image, connected_components_color_tolerance)
     approximated_image_components = dict()
     rows, columns, _ = approximated_image.shape
