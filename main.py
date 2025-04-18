@@ -172,7 +172,6 @@ def approximate_image(image, approximating_colors, distance_function=color_dist)
                 if cur_dist < min_clr_dist:
                     min_clr_dist = cur_dist
                     closest_color = color
-            print(closest_color)
             new_image[i, j] = closest_color
     return new_image.astype(np.uint8)
 
@@ -496,38 +495,16 @@ def ask_user_for_int_data(text):
     return res
 
 
-def plot_polygon(points):
-    # Замыкаем фигуру (соединяем последнюю точку с первой)
-    closed_points = points + [points[0]]
-    x, y = zip(*closed_points)  # Разделяем координаты X и Y
-
-    plt.figure()
-    plt.plot(x, y, 'b-', linewidth=2)  # Синяя линия
-    plt.scatter(x, y, c='red')  # Точки красным
-    plt.title("Polygon from Points")
-    plt.axis('equal')  # Сохраняем пропорции осей
-    plt.grid(True)
-    plt.show()
-
-
 def main():
-    image = Image.open("test.png")
-    # image = Image.open(input("Filename: "))
+    image = Image.open(input("Filename: "))
     pixel_array = np.array(image)
-    # max_colors_amount = ask_user_for_int_data("Max amount of colors: ")
-    # monte_carlo_color_optimization_iterations_amount = ask_user_for_int_data("Amount of monte carlo optimization iterations: ")
-    # connected_components_color_tolerance = ask_user_for_int_data("Color tolerance for different elements of connected components in dsu: ")
-    # initial_polyline_num_points = ask_user_for_int_data("Initial polyline points amount: ")
-    # attempts_to_generate_initial_polyline = ask_user_for_int_data("Attempt to generate initial polyline: ")
-    max_colors_amount = 3
-    monte_carlo_color_optimization_iterations_amount = 200
-    connected_components_color_tolerance = 10
-    initial_polyline_num_points = 25
-    attempts_to_generate_initial_polyline = 100000
+    max_colors_amount = ask_user_for_int_data("Max amount of colors: ")
+    monte_carlo_color_optimization_iterations_amount = ask_user_for_int_data("Amount of monte carlo optimization iterations: ")
+    connected_components_color_tolerance = ask_user_for_int_data("Color tolerance for different elements of connected components in dsu: ")
+    initial_polyline_num_points = ask_user_for_int_data("Initial polyline points amount: ")
+    attempts_to_generate_initial_polyline = ask_user_for_int_data("Attempt to generate initial polyline: ")
     best_colors = monte_carlo_color_optimization(pixel_array, max_colors_amount, monte_carlo_color_optimization_iterations_amount)
-    print(best_colors)
     approximated_image = approximate_image(pixel_array, best_colors[0])
-    print(approximated_image)
     approximated_image_dsu = find_connected_components_dsu_color(approximated_image, connected_components_color_tolerance)
     approximated_image_components = dict()
     rows, columns, _ = approximated_image.shape
@@ -558,7 +535,6 @@ def main():
         final_bezier_curve = fit_bezier_curve(optimized_polyline, approximated_image_components[component])
         component_color = tuple(approximated_image[approximated_image_components[component][0][0]][approximated_image_components[component][0][1]])
         final_bezier_curve = [(x, y) for y, x in final_bezier_curve]
-        # draw.line(final_bezier_curve, fill=component_color, width=2)
         draw.line(final_bezier_curve + [final_bezier_curve[0]], fill=component_color, width=2)
 
     output_image.save("res.png")
