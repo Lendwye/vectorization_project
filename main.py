@@ -364,17 +364,18 @@ def generate_initial_non_self_intersecting_polyline(boundary_points, num_points)
                 min_distance = distance
                 nearest_point = p
         new_line = LineString([current_point, nearest_point])
-        # intersects = False
+        intersects = False
         # for i in range(len(polyline) - 1):
         #     existing_line = LineString([polyline[i], polyline[i + 1]])
         #     if new_line.intersects(existing_line):
         #         intersects = True
         #         break
-        # if intersects:
-        #     remaining_points.remove(nearest_point)
-        #     if not remaining_points:
-        #         return None
-        #     continue
+        intersects = is_self_intersecting(LineString(polyline + [nearest_point]))
+        if intersects:
+            remaining_points.remove(nearest_point)
+            if not remaining_points:
+                return None
+            continue
         polyline.append(nearest_point)
         current_point = nearest_point
         remaining_points.remove(nearest_point)
@@ -503,7 +504,7 @@ def plot_polygon(points):
 
 
 def main():
-    image = Image.open("test.png")
+    image = Image.open(input("Filename: "))
     pixel_array = np.array(image)
     max_colors_amount = ask_user_for_int_data("Max amount of colors: ")
     monte_carlo_color_optimization_iterations_amount = ask_user_for_int_data("Amount of monte carlo optimization iterations: ")
@@ -540,9 +541,10 @@ def main():
             continue
         optimized_polyline = optimize_polyline(initial_non_self_intersecting_polyline, approximated_image_components[component])
         final_bezier_curve = fit_bezier_curve(optimized_polyline, approximated_image_components[component])
-        draw.line(final_bezier_curve + [final_bezier_curve[0]], fill=(0, 0, 0), width=2)
+        component_color = tuple(approximated_image[approximated_image_components[component][0][0]][approximated_image_components[component][0][1]])
+        draw.line(final_bezier_curve + [final_bezier_curve[0]], fill=component_color, width=2)
 
-    output_image.save('res.png')
+    output_image.save("res.png")
     output_image.show()
 
 
