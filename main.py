@@ -4,6 +4,7 @@ import random
 
 # python libs
 import numpy as np
+import matplotlib.pyplot as plt
 from PIL import Image
 from shapely import Point, LineString
 from shapely.geometry import Polygon
@@ -363,17 +364,17 @@ def generate_initial_non_self_intersecting_polyline(boundary_points, num_points)
                 min_distance = distance
                 nearest_point = p
         new_line = LineString([current_point, nearest_point])
-        intersects = False
-        for i in range(len(polyline) - 1):
-            existing_line = LineString([polyline[i], polyline[i + 1]])
-            if new_line.intersects(existing_line):
-                intersects = True
-                break
-        if intersects:
-            remaining_points.remove(nearest_point)
-            if not remaining_points:
-                return None
-            continue
+        # intersects = False
+        # for i in range(len(polyline) - 1):
+        #     existing_line = LineString([polyline[i], polyline[i + 1]])
+        #     if new_line.intersects(existing_line):
+        #         intersects = True
+        #         break
+        # if intersects:
+        #     remaining_points.remove(nearest_point)
+        #     if not remaining_points:
+        #         return None
+        #     continue
         polyline.append(nearest_point)
         current_point = nearest_point
         remaining_points.remove(nearest_point)
@@ -383,7 +384,7 @@ def generate_initial_non_self_intersecting_polyline(boundary_points, num_points)
 def calculate_polyline_length(polyline):
     length = 0
     for i in range(len(polyline) - 1):
-        length += ((polyline[i + 1][0] - polyline[i][0]) ** 2 + (polyline[i + 1][i] - polyline[i][1]) ** 2) ** 0, 5
+        length += ((polyline[i + 1][0] - polyline[i][0]) ** 2 + (polyline[i + 1][1] - polyline[i][1]) ** 2) ** 0.5
     return length
 
 
@@ -487,6 +488,20 @@ def ask_user_for_int_data(text):
     return res
 
 
+def plot_polygon(points):
+    # Замыкаем фигуру (соединяем последнюю точку с первой)
+    closed_points = points + [points[0]]
+    x, y = zip(*closed_points)  # Разделяем координаты X и Y
+
+    plt.figure()
+    plt.plot(x, y, 'b-', linewidth=2)  # Синяя линия
+    plt.scatter(x, y, c='red')  # Точки красным
+    plt.title("Polygon from Points")
+    plt.axis('equal')  # Сохраняем пропорции осей
+    plt.grid(True)
+    plt.show()
+
+
 def main():
     image = Image.open("test.png")
     pixel_array = np.array(image)
@@ -508,21 +523,22 @@ def main():
             else:
                 approximated_image_components[component_parent] = [(r, c)]
     for component in approximated_image_components:
+        if not is_like_circle(approximated_image_components[component]):
+            continue
         boundary_points = find_approximate_boundary_points(approximated_image_components[component])
         initial_non_self_intersecting_polyline = None
         for attempt in range(attempts_to_generate_initial_polyline):
             initial_non_self_intersecting_polyline = generate_initial_non_self_intersecting_polyline(boundary_points, initial_polyline_num_points)
-            if not(initial_non_self_intersecting_polyline is None):
+            if not(initial_non_self_intersecting_polyline is None) and not is_self_intersecting(LineString(initial_non_self_intersecting_polyline)):
                 break
-            else:
-                print("Fail, one more attempt...")
+            print("Fail, one more attempt...")
         else:
-            print("Program failed to generate initial polyline")
-            return
-        optimized_polyline = optimize_polyline(initial_non_self_intersecting_polyline, component)
-        final_bezier_curve = fit_bezier_curve(optimized_polyline, component)
+            print("Failed to generate initial polyline for current component")
+            continue
+        optimized_polyline = optimize_polyline(initial_non_self_intersecting_polyline, approximated_image_components[component])
+        final_bezier_curve = fit_bezier_curve(optimized_polyline, approximated_image_components[component])
         print(final_bezier_curve)
-
+        plot_polygon(final_bezier_curve)
 
 if __name__ == "__main__":
     main()
